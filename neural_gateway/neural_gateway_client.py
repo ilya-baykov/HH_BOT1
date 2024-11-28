@@ -93,17 +93,6 @@ class ChatGPT(NeuralGatewayClient):
         logger.debug(f'Сформированные данные для запроса к нейрошлюзу: {data}')
         return data
 
-    def get_answer(self, prompt: str):
-        request_data = self._create_data_request(prompt=prompt)
-        response: Response = self._get_response(request_data=request_data)
-
-        try:
-            response_data = response.json()
-            if response_data and isinstance(response_data, list) and len(response_data) > 0:
-                return response_data[0]['message']['content']
-        except Exception as e:
-            logger.error(f"При попытке получить ответ от нейрошлюза произошла ошибка: {e}")
-
 
 class YaGPT(NeuralGatewayClient):
     MODEL = "yandexgpt-lite"
