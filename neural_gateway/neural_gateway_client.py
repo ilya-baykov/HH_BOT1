@@ -1,15 +1,15 @@
 import json
+from abc import ABC, abstractmethod
+from typing import Optional
 
-from configuration_file_handler.file_dataclass import RecruiterDataParams
-from configuration_file_handler.read_file import RecruiterDataReader
+import requests
+from requests import Response
 from logger import logger
-from neural_gateway.prompt_generator import PromptGenerator
 from neural_gateway.requests_func import post_request
-from pdf_parser.pdf_reader import PDFTextExtractor
 
 
-class NeuralGatewayClient:
-    """Класс для подключения к нейрошлюзу и выполнения запросов к API нейросети."""
+class NeuralGatewayClient(ABC):
+    BASE_URL = "https://ai.rt.ru/api/1.0"  # Основной путь url нейрошлюза для разных моделей
 
     # Приватное свойство для хранения токена авторизации.
     __TOKEN = ("eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiY2hhdEdwdCIsImdpZ2FDaGF0Iiwib"
@@ -19,31 +19,64 @@ class NeuralGatewayClient:
     # Заголовки HTTP запроса, включая авторизацию и тип контента.
     __HEADERS = {"Authorization": f"Bearer {__TOKEN}", "Content-Type": "application/json"}
 
-    __URL = "https://ai.rt.ru/api/1.0/chatgpt/chat"
+    TEMPERATURE = 0
+    URL = None
 
-    def __init__(self, model="gpt-4o-mini", temperature=0):
+    def __init__(self):
+        if not hasattr(self, 'URL'):
+            raise NotImplementedError("Класс-наследник должен определить атрибут URL и он не должен быть None.")
+
+    def get_answer(self, prompt: str):
+        request_data = self._create_data_request(prompt=prompt)
+        response: Response = self._get_response(request_data=request_data)
+
+        try:
+            response_data = response.json()
+            if response_data and isinstance(response_data, list) and len(response_data) > 0:
+                return response_data[0]['message']['content']
+        except Exception as e:
+            logger.error(f"При попытке получить ответ от нейрошлюза произошла ошибка: {e}")
+
+    @abstractmethod
+    def _create_data_request(self, prompt: str):
         """
-        Инициализация экземпляра класса NeuralGatewayClient.
+            Формирует данные для отправки запроса к API.
+
+            Args:
+            - content (str): Входные данные от пользователя для обработки.
+
+            Returns:
+            - dict: Словарь с данными для запроса к API.
+            """
+        pass
+
+    def _get_response(self, request_data: dict) -> Optional[Response]:
+        """
+        Обрабатывает входные данные от пользователя.
 
         Args:
-        - model (str): Модель нейросети для использования (по умолчанию "gpt-4o-mini").
-        - temperature (float): Температура для генерации ответов (по умолчанию 0).
-
-        """
-        self.model = model
-        self.temperature = temperature
-
-    def __create_request(self, prompt) -> dict:
-        """
-        Формирует данные для отправки запроса к API.
-
-        Args:
-        - content (str): Входные данные от пользователя для обработки.
+        - prompt (str): Строка данных от пользователя для обработки (промпт).
 
         Returns:
-        - dict: Словарь с данными для запроса к API.
+        - str: Результат обработки запроса к API или сообщение об ошибке.
         """
-        logger.info(f'Отправка текста в нейрошлюз: {prompt}')
+        try:
+            response = post_request(self.URL, self.__HEADERS, json.dumps(request_data))
+            response.raise_for_status()  # Проверяем статус ответа
+            logger.info(f"{self.URL}. Статус - {response.status_code}")
+            return response
+        except requests.exceptions.RequestException as e:
+            logger.error(f"{self.URL}.Произошла ошибка: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"{self.URL}.Произошла неизвестная ошибка: {e}")
+
+
+class ChatGPT(NeuralGatewayClient):
+    MODEL = "gpt-4o-mini"
+    URL = f"{NeuralGatewayClient.BASE_URL}/chatgpt/chat"
+
+    def _create_data_request(self, prompt: str) -> dict:
         data = {
             "chat": {
                 "messages": [
@@ -53,47 +86,43 @@ class NeuralGatewayClient:
                         "type": "msg"
                     }
                 ],
-                "model": self.model,
-                "temperature": self.temperature
+                "model": self.MODEL,
+                "temperature": self.TEMPERATURE
             }
         }
+        logger.debug(f'Сформированные данные для запроса к нейрошлюзу: {data}')
         return data
 
-    def process_content(self, prompt: str):
-        """
-        Обрабатывает входные данные от пользователя.
+    def get_answer(self, prompt: str):
+        request_data = self._create_data_request(prompt=prompt)
+        response: Response = self._get_response(request_data=request_data)
 
-        Args:
-        - content (str): Строка данных от пользователя для обработки.
-
-        Returns:
-        - str: Результат обработки запроса к API или сообщение об ошибке.
-        """
         try:
-            data = self.__create_request(prompt)
-            response = post_request(self.__URL, self.__HEADERS, json.dumps(data))
-
-            if response.status_code == 200:
-                response_data = response.json()
-                if response_data and isinstance(response_data, list) and len(response_data) > 0:
-                    return response_data[0]['message']['content']
-                else:
-                    return None
-            else:
-                return f"Ошибка при запросе к API. Код статуса: {response.status_code}"
+            response_data = response.json()
+            if response_data and isinstance(response_data, list) and len(response_data) > 0:
+                return response_data[0]['message']['content']
         except Exception as e:
-            logger.error(f"Ошибка при обработке запроса: {e}")
-            return None
+            logger.error(f"При попытке получить ответ от нейрошлюза произошла ошибка: {e}")
 
 
-model_gpt_4o_mini = NeuralGatewayClient()
+class YaGPT(NeuralGatewayClient):
+    MODEL = "yandexgpt-lite"
+    URL = f"{NeuralGatewayClient.BASE_URL}/ya/chat"
 
-pdf_path = r"C:\Users\ilyab\PycharmProjects\HH_BOT_1\pdf_parser\Бакулева Дарья Олеговна.pdf"
-resume_text = PDFTextExtractor.get_text(pdf_path=pdf_path)
-
-recruiter_params: RecruiterDataParams = RecruiterDataReader().read_data()
-
-prompt = PromptGenerator.generate_prompt(recruiter_params=recruiter_params, resume_text=resume_text)
-
-result_1 = model_gpt_4o_mini.process_content(prompt=prompt)
-logger.info(result_1)
+    def _create_data_request(self, prompt: str) -> dict:
+        data = {
+            "chat": {
+                "model": self.MODEL,
+                "messages": [
+                    {
+                        "role": "user",
+                        "text": prompt
+                    }
+                ],
+                "completionOptions": {
+                    "temperature": self.TEMPERATURE
+                }
+            }
+        }
+        logger.debug(f'Сформированные данные для запроса к нейрошлюзу: {data}')
+        return data

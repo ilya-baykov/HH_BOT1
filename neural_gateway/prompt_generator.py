@@ -13,6 +13,7 @@ class PromptGenerator:
                - Необходимый опыт работы: {recruiter_params.required_experience}
                - Основные обязанности: {recruiter_params.main_responsibilities}
                - Пол (предпочтения): {recruiter_params.gender_preference}
+               - Ожидаемая заработная плата: {recruiter_params.salary}
 
                Обязательно проанализируй предыдущий опыт работы кандидата, указанный в резюме. Обрати внимание на:
                - Соответствие опыта работы требованиям вакансии (отрасль, должности, уровень ответственности).

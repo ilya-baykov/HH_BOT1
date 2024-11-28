@@ -20,11 +20,3 @@ class PDFTextExtractor:
             print(f"Ошибка при извлечении текста: {e}")
             return None
         return text
-
-
-# Пример использования
-
-pdf_path = r"C:\Users\ilyab\PycharmProjects\HH_BOT_1\pdf_parser\Руководитель проекта, исполнительный директор.pdf"
-extractor = PDFTextExtractor()
-extracted_text = extractor.get_text(pdf_path)
-print(extracted_text)
