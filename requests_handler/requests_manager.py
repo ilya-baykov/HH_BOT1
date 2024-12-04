@@ -15,45 +15,90 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class RequestsManager:
-    def __init__(self, TOKEN: str):
-        self.get = RequestsGet(TOKEN)
-        self.post = RequestsPost(TOKEN)
+    def __init__(self, ACCESS_TOKEN: str):
+        if ACCESS_TOKEN is None:
+            raise TokenNotFoundError("Токен не найден. Убедитесь, что переменная 'TOKEN' определена в .env файле.")
+
+        self.get = RequestsGet(ACCESS_TOKEN)
+        self.post = RequestsPost(ACCESS_TOKEN)
+        self.reference_book_get = ReferenceBookRequestsGet(ACCESS_TOKEN)
 
 
 class RequestsBase:
     BASE_URL = HH_BASE_URL
 
-    def __init__(self, token: str):
-        self._token = token
+    def __init__(self, ACCESS_TOKEN: str):
+        self.headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}",
+            "HH-User-Agent": "RTK Resume Search (bot_podbor_oco@rt.ru)"
+        }
 
-    @staticmethod
-    def _get_response(method: str, url: str, data: Optional[dict] = None,
+    def _get_response(self, method: str, url: str, data: Optional[dict] = None, params: Optional[dict] = None,
                       headers: Optional[dict] = None, logger_message: str = "") -> Optional[Response]:
-        headers = headers if isinstance(headers, dict) else {}
+        headers = headers if isinstance(headers, dict) else self.headers
         data = data if isinstance(data, dict) else {}
+        params = params if isinstance(params, dict) else {}
 
         if method.lower() == 'post':
             response = requests.post(url=url, headers=headers, data=data, verify=False)
         else:  # По умолчанию используем GET
-            response = requests.get(url=url, headers=headers, data=data)
+            response = requests.get(url=url, headers=headers, params=params)
 
         try:
             response.raise_for_status()  # Проверяем статус ответа
             logger.info(f"{logger_message}. Статус - {response.status_code}")
             return response
-        except requests.exceptions.RequestException as e:
-            logger.error(f"{logger_message}.Произошла ошибка: {e}")
+        except requests.exceptions.RequestException as error:
+            logger.error(f"{logger_message}.Произошла ошкибка: {error}")
             return None
 
 
 class RequestsGet(RequestsBase):
     METHOD = "GET"
 
+    def get_user_info(self):
+        url = f"{self.BASE_URL}/me"
+        response = self._get_response(method=self.METHOD, url=url,
+                                      logger_message=f"Запрос на получение информации о пользователе")
+        return response
+
+    def get_day_limits(self, employer_id: str, manager_id: str):
+        params = {'employer_id': employer_id, 'manager_id': manager_id}
+        url = f"{self.BASE_URL}/employers/{employer_id}/managers/{manager_id}/limits/resume"
+        response = self._get_response(method=self.METHOD, url=url,
+                                      logger_message=f"Запрос на получение дневных лимитов просмотра резюме "
+                                                     f"для текущего менеджера с параметрами: {params}")
+        return response
+
+    def get_resumes(self, **kwargs):
+        url = f"{HH_BASE_URL}/resumes"
+        response = self._get_response(method=self.METHOD, url=url, params=kwargs,
+                                      logger_message=f"Запрос на получение резюме")
+        return response
+
+
+class ReferenceBookRequestsGet(RequestsBase):
+    METHOD = "GET"
+
+    def get_areas(self, text: str):
+        url = f"{HH_BASE_URL}/suggests/areas"
+        params = {'text': text}
+        response = self._get_response(method=self.METHOD, url=url, params=params,
+                                      logger_message=f"Запрос на получение древовидного списка всех регионов ")
+        return response
+
+    def get_field_reference(self):
+        url = f"{HH_BASE_URL}/dictionaries/"
+        response = self._get_response(method=self.METHOD, url=url,
+                                      logger_message=f"Запрос на получение справочников полей и сущностей, "
+                                                     f"применяемых в API.")
+        return response
+
 
 class RequestsPost(RequestsBase):
     METHOD = "POST"
 
-    def get_access_token(self, client_id: str, client_secret: str) -> Optional[Response]:
+    def get_access_token_application(self, client_id: str, client_secret: str) -> Optional[Response]:
         """
         Получает новый access-токен для приложения.
 
@@ -69,11 +114,22 @@ class RequestsPost(RequestsBase):
         :return: Optional[Response]
             Ответ от API, содержащий новый access-токен или информацию об ошибке.
         """
-        params = {'client_id': client_id, 'client_secret': client_secret, 'grant_type': 'client_credentials'}
+        data = {'client_id': client_id, 'client_secret': client_secret, 'grant_type': 'client_credentials'}
         url = f"{self.BASE_URL}/token"
-        response = self._get_response(method=self.METHOD, url=url, data=params,
+        response = self._get_response(method=self.METHOD, url=url, data=data,
                                       logger_message=f"Запрос на получение access-токена "
-                                                     f"по параметрам:{params}")
+                                                     f"по параметрам:{data}")
+        return response
+
+    def get_access_token_user(self, client_id: str, client_secret: str, code: str,
+                              redirect_uri: str) -> Optional[Response]:
+        data = {'client_id': client_id, 'client_secret': client_secret, 'code': code, 'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code'}
+
+        url = f"{self.BASE_URL}/token"
+        response = self._get_response(method=self.METHOD, url=url, data=data,
+                                      logger_message=f"Запрос на получение access-токена "
+                                                     f"по параметрам:{data}")
         return response
 
 
@@ -85,9 +141,5 @@ except Exception as e:
     logger.error(f"При попытке загрузить файл:{dotenv_path} произошла ошибка - {e}")
     raise EnvFileLoadError(f"Не удалось загрузить файл: {dotenv_path}") from e
 
-__TOKEN = os.getenv('TOKEN')
-if __TOKEN is None:
-    raise TokenNotFoundError("Токен не найден. Убедитесь, что переменная 'TOKEN' определена в .env файле.")
-
-otrs_request_manager = RequestsManager(TOKEN=__TOKEN)
-otrs_request_manager.post.get_access_token(client_id=os.getenv('CLIENT_ID'), client_secret=os.getenv('CLIENT_SECRET'))
+request_manager = RequestsManager(
+    ACCESS_TOKEN='USERG50OSH6FBK6BBRQP5SHP6P47BPN4C0IK2739NTF9BGN163OGNOFIN1N6CIPE')
