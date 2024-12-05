@@ -100,3 +100,15 @@ class RecruiterDataParams:
         text_params = f"text={' OR '.join(search_phrases)}&text.logic=any&text.field=everywhere&text.period=last_year"
         logger.debug(f"Для поиска по названиям должностей были сформированы такие параметры: {text_params}")
         return text_params
+
+    @property
+    def text_params_responsibilities(self) -> str:
+        # Получаем список поисковых словосочетаний для фильтрации по обязанностям
+        responsibilities_phrases = [f'"{phrases.strip()}"' for phrases in self.main_responsibilities.split(',') if
+                                    phrases.strip()]
+
+        # Формируем строку с текстовыми параметрами для логического ИЛИ
+        text_params = (f"text={' OR '.join(responsibilities_phrases)}&"
+                       f"text.logic=any&text.field=experience_description&text.period=last_year")
+        logger.debug(f"Для поиска по обязанностям были сформированы такие параметры: {text_params}")
+        return text_params

@@ -49,6 +49,7 @@ def main() -> None:
         # 'label': 'only_with_salary'  # Дополнительный фильтр
     }
     text_params = recruiter_params.text_params_job_titles
+
     # Получение подходящих резюме
     resumes = request_manager.get.get_resumes(text_params=text_params, params=params)
 
