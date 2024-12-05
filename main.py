@@ -25,7 +25,7 @@ def main() -> None:
                                                 manager_id=os.getenv('MANAGER_ID'))
     #
     # # Данные из настроечного файла от рекрутера
-    configuration_file_path = r"C:\Users\ilyab\PycharmProjects\HH_BOT_1\configuration_files\Клепач_Оператор call-центра_308119.xlsx"
+    configuration_file_path = r"C:\Users\ilyab\PycharmProjects\HH_BOT_1\configuration_files\Клепач_Оператор call-центра_308119 (2).xlsx"
     recruiter_params: RecruiterDataParams = RecruiterDataReader(file_path=configuration_file_path).read_data()
 
     # Формирование строки параметров

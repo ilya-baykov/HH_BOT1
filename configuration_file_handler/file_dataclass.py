@@ -4,6 +4,8 @@ from typing import List, Optional
 from requests import Response
 
 from configuration_file_handler.enums_for_dataclass import *
+from configuration_file_handler.exeptions import MissingParameterError
+from configuration_file_handler.literals import BinaryChoice, EducationLevel, Gender, ExclusionCriteria
 from requests_handler.requests_manager import request_manager
 from logger import logger
 
@@ -16,12 +18,12 @@ class RecruiterDataParams:
     vacancy: str  # Вакансия по штатной книге
 
     region: str  # Регион (территория поиска)
-    city: str  # Город (место трудоустройства)
+    city: Optional[str]  # Город (место трудоустройства)
 
     job_title: str  # Название должности (ключевые слова или варианты поиска)
     main_responsibilities: str  # Основные обязанности (ключевые слова)
 
-    education: Optional[str]  # Образование (минимальный уровень)
+    education: Optional[EducationLevel]  # Образование (минимальный уровень)
 
     search_status: Optional[str]  # Статус поиска
 
@@ -29,15 +31,15 @@ class RecruiterDataParams:
 
     required_experience: str  # Необходимый опыт работы (отрасль, должности, уровень ответственности и др.)
 
-    employment_type_full_time: str | BinaryChoice  # Тип занятости: Полная занятость
-    employment_type_part_time: str | BinaryChoice  # Тип занятости: Частичная занятость
-    employment_type_project: str | BinaryChoice  # Тип занятости: Проектная работа/разовое задание
-    employment_type_internship: str | BinaryChoice  # Тип занятости: Стажировка
-    work_schedule_full_day: str | BinaryChoice  # График работы: Полный день
-    work_schedule_shift: str | BinaryChoice  # График работы: Сменный график
-    work_schedule_flexible: str | BinaryChoice  # График работы: Гибкий график
-    work_schedule_remote: str | BinaryChoice  # График работы: Удаленная работа
-    work_schedule_rotational: str | BinaryChoice  # График работы: Вахтовый метод
+    employment_type_full_time: BinaryChoice  # Тип занятости: Полная занятость
+    employment_type_part_time: BinaryChoice  # Тип занятости: Частичная занятость
+    employment_type_project: BinaryChoice  # Тип занятости: Проектная работа/разовое задание
+    employment_type_internship: BinaryChoice  # Тип занятости: Стажировка
+    work_schedule_full_day: BinaryChoice  # График работы: Полный день
+    work_schedule_shift: BinaryChoice  # График работы: Сменный график
+    work_schedule_flexible: BinaryChoice  # График работы: Гибкий график
+    work_schedule_remote: BinaryChoice  # График работы: Удаленная работа
+    work_schedule_rotational: BinaryChoice  # График работы: Вахтовый метод
 
     salary: str  # Заработная плата
 
@@ -53,19 +55,46 @@ class RecruiterDataParams:
 
     specialization: Optional[str]  # Специализация (указать из справочника специализации, если не требуется - None)
 
-    show_resume_without_salary: str | BinaryChoice  # Показывать резюме без указания зарплаты
+    show_resume_without_salary: BinaryChoice  # Показывать резюме без указания зарплаты
 
     resume_view_depth: str  # Глубина просмотра резюме на HH.ru в днях
 
-    exclude_resume_keywords: str | BinaryChoice  # Требуется ли исключить резюме из поиска по ключевым словам
+    exclude_resume_keywords: BinaryChoice  # Требуется ли исключить резюме из поиска по ключевым словам
     exclude_keywords: Optional[str]  # Слова, с которыми робот не должен искать резюме
-    exclude_resume_phrases: Optional[str | ExclusionCriteria]  # Исключать резюме, в которых содержатся
+    exclude_resume_phrases: Optional[ExclusionCriteria]  # Исключать резюме, в которых содержатся
     exclude_keywords_in: List[str]  # Ключевые слова для исключения содержатся
-    exclude_in_everywhere: Optional[str | BinaryChoice]  # Везде
-    exclude_in_resume_title: Optional[str | BinaryChoice]  # В названии резюме
-    exclude_in_education: Optional[str | BinaryChoice]  # В образовании
-    exclude_in_skills: Optional[str | BinaryChoice]  # В ключевых навыках
-    exclude_in_work_experience: Optional[str | BinaryChoice]  # В опыте работы
+    exclude_in_everywhere: Optional[BinaryChoice]  # Везде
+    exclude_in_resume_title: Optional[BinaryChoice]  # В названии резюме
+    exclude_in_education: Optional[BinaryChoice]  # В образовании
+    exclude_in_skills: Optional[BinaryChoice]  # В ключевых навыках
+    exclude_in_work_experience: Optional[BinaryChoice]  # В опыте работы
+
+    def __post_init__(self):
+        # Проверка обязательных параметров
+        if not self.fio_recruiter:
+            raise MissingParameterError("ФИО рекрутера обязательно.")
+        if not self.email_recruiter:
+            raise MissingParameterError("Почта рекрутера обязательна.")
+        if not self.application_number:
+            raise MissingParameterError("Номер заявки обязателен.")
+        if not self.vacancy:
+            raise MissingParameterError("Вакансия обязательна.")
+        if not self.region:
+            raise MissingParameterError("Регион обязателен.")
+        if not self.job_title:
+            raise MissingParameterError("Название должности обязательно.")
+        if not self.main_responsibilities:
+            raise MissingParameterError("Основные обязанности обязательны.")
+        if not self.education:
+            raise MissingParameterError("Минимальный уровень образования обязателен")
+        if not self.required_experience:
+            raise MissingParameterError("Необходимый опыт работы обязателен.")
+        if not self.salary:
+            raise MissingParameterError("Заработная плата обязательна.")
+        if not self.age:
+            raise MissingParameterError("Возраст обязателен")
+        if not self.citizenship:
+            raise MissingParameterError("Гражданство обязательно.")
 
     @property
     def search_territory(self) -> list[str]:
