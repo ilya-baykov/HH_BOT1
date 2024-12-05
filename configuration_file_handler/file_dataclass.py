@@ -91,24 +91,45 @@ class RecruiterDataParams:
         unique_ids: list[str] = list(set(areas_ids))  # Убираем дубликаты
         return unique_ids
 
-    @property
-    def text_params_job_titles(self) -> str:
-        # Получаем список поисковых словосочетаний для фильтрации по названию должности
-        search_phrases = [f'"{phrases.strip()}"' for phrases in self.job_title.split(',') if phrases.strip()]
+    @staticmethod
+    def generate_text_params(phrases_list: str,
+                             logic: str = 'any', field: str = 'everywhere', period: str = 'last_year') -> str:
+        """
+           Формирует текстовый параметр на основе переданного списка фраз.
+
+           Параметры:
+           ----------
+           phrases_list : str
+               Строка, содержащая фразы, разделенные запятыми. Каждая фраза будет обработана для формирования
+               поискового запроса.
+
+           Logic : str, по умолчанию 'any'
+               Логика поиска, определяющая, как обрабатываются фразы:
+               - 'all': Все слова должны встречаться.
+               - 'any': Любое из слов должно встречаться.
+               - 'phrase': Должна встречаться точная фраза.
+               - 'except': Указывает, что слова не должны встречаться.
+
+           Field : str, по умолчанию 'everywhere'
+               Поле, в котором будет производиться поиск. Возможные значения:
+               - 'everywhere': Поиск по всем полям.
+               - 'title': Поиск в названии резюме.
+               - 'education': Поиск в образовании.
+               - 'skills': Поиск в ключевых навыках.
+               - 'experience': Поиск в опыте работы.
+               - 'experience_company': Поиск в компаниях и отраслях.
+               - 'experience_position': Поиск в должностях.
+               - 'experience_description': Поиск в обязанностях.
+
+           Period : str, по умолчанию 'last_year'
+               Период, за который будет производиться поиск. Например, 'last_year' для поиска за последний год.
+        """
+
+        # Получаем список поисковых словосочетаний для фильтрации
+        search_phrases = [f'"{phrases.strip()}"' for phrases in phrases_list.split(',') if phrases.strip()]
 
         # Формируем строку с текстовыми параметрами для логического ИЛИ
-        text_params = f"text={' OR '.join(search_phrases)}&text.logic=any&text.field=everywhere&text.period=last_year"
-        logger.debug(f"Для поиска по названиям должностей были сформированы такие параметры: {text_params}")
-        return text_params
+        text_params = f"text={' OR '.join(search_phrases)}&text.logic={logic}&text.field={field}&text.period={period}"
 
-    @property
-    def text_params_responsibilities(self) -> str:
-        # Получаем список поисковых словосочетаний для фильтрации по обязанностям
-        responsibilities_phrases = [f'"{phrases.strip()}"' for phrases in self.main_responsibilities.split(',') if
-                                    phrases.strip()]
-
-        # Формируем строку с текстовыми параметрами для логического ИЛИ
-        text_params = (f"text={' OR '.join(responsibilities_phrases)}&"
-                       f"text.logic=any&text.field=experience_description&text.period=last_year")
-        logger.debug(f"Для поиска по обязанностям были сформированы такие параметры: {text_params}")
+        logger.debug(f"Для поиска были сформированы такие параметры: {text_params}")
         return text_params
