@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pdfplumber
+from logger import logger
 
 
 class PDFTextExtractor:
@@ -17,6 +18,6 @@ class PDFTextExtractor:
                     if page_text:  # Проверяем, что текст был извлечен
                         text += page_text + '\n'
         except Exception as e:
-            print(f"Ошибка при извлечении текста: {e}")
+            logger.error(f"Ошибка при извлечении текста: {e}")
             return None
         return text

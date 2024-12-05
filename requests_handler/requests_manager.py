@@ -1,4 +1,6 @@
 import os
+import urllib
+
 import requests
 import urllib3
 from typing import Optional
@@ -43,13 +45,13 @@ class RequestsBase:
             response = requests.post(url=url, headers=headers, data=data, verify=False)
         else:  # По умолчанию используем GET
             response = requests.get(url=url, headers=headers, params=params)
-
         try:
             response.raise_for_status()  # Проверяем статус ответа
             logger.info(f"{logger_message}. Статус - {response.status_code}")
+            response_url = response.url
             return response
         except requests.exceptions.RequestException as error:
-            logger.error(f"{logger_message}.Произошла ошкибка: {error}")
+            logger.error(f"{logger_message}.Произошла ошибка: {error}")
             return None
 
 
@@ -70,9 +72,9 @@ class RequestsGet(RequestsBase):
                                                      f"для текущего менеджера с параметрами: {params}")
         return response
 
-    def get_resumes(self, **kwargs):
-        url = f"{HH_BASE_URL}/resumes"
-        response = self._get_response(method=self.METHOD, url=url, params=kwargs,
+    def get_resumes(self, text_params: str, params: dict):
+        url = f"{HH_BASE_URL}/resumes?{text_params}"
+        response = self._get_response(method=self.METHOD, url=url, params=params,
                                       logger_message=f"Запрос на получение резюме")
         return response
 
@@ -84,7 +86,8 @@ class ReferenceBookRequestsGet(RequestsBase):
         url = f"{HH_BASE_URL}/suggests/areas"
         params = {'text': text}
         response = self._get_response(method=self.METHOD, url=url, params=params,
-                                      logger_message=f"Запрос на получение древовидного списка всех регионов ")
+                                      logger_message=f"Запрос на получение древовидного списка "
+                                                     f"всех регионов для: {text} ")
         return response
 
     def get_field_reference(self):
@@ -92,6 +95,14 @@ class ReferenceBookRequestsGet(RequestsBase):
         response = self._get_response(method=self.METHOD, url=url,
                                       logger_message=f"Запрос на получение справочников полей и сущностей, "
                                                      f"применяемых в API.")
+        return response
+
+    def get_professional_roles_reference(self):
+        url = f"{HH_BASE_URL}/professional_roles/"
+        response = self._get_response(method=self.METHOD, url=url,
+                                      logger_message=f"Запрос на получение справочной информации о "
+                                                     f"профессиональных ролях, их категориях и другую информацию о "
+                                                     f"профессиональных ролях")
         return response
 
 

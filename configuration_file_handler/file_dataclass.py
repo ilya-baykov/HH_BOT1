@@ -1,7 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from requests import Response
+
 from configuration_file_handler.enums_for_dataclass import BinaryChoice, Gender, ExclusionCriteria
+from requests_handler.requests_manager import request_manager
+from logger import logger
 
 
 @dataclass
@@ -63,4 +67,36 @@ class RecruiterDataParams:
     exclude_in_skills: Optional[str | BinaryChoice]  # В ключевых навыках
     exclude_in_work_experience: Optional[str | BinaryChoice]  # В опыте работы
 
+    @property
+    def search_territory(self) -> list[str]:
+        """Возвращает регионы для поиска в виде списка area_id"""
+        regions: list[str] = self.region.split(",")  # Список регионов из настроечного файла
+        areas_ids = set()  # множество для хранения уникальных area_id регионов
 
+        for region in regions:
+            area_response: Response = request_manager.reference_book_get.get_areas(text=region)  # Запрос к API
+            try:
+
+                items: list[dict] = area_response.json().get('items')
+                if items:
+                    items_ids = [item.get('id') for item in items]
+                    logger.debug(f"Для региона={region} были получены такие id:[{items_ids}]")
+                    areas_ids.update(items_ids)
+                else:
+                    logger.error(f"Для региона={region} не получилось получить items]")
+
+            except Exception as e:
+                logger.error(f"При попытке получить id регионов-произошла ошибка - {e}")
+
+        unique_ids: list[str] = list(set(areas_ids))  # Убираем дубликаты
+        return unique_ids
+
+    @property
+    def text_params_job_titles(self) -> str:
+        # Получаем список поисковых словосочетаний для фильтрации по названию должности
+        search_phrases = [f"'{phrases.strip()}'" for phrases in self.job_title.split(',') if phrases.strip()]
+
+        # Формируем строку с текстовыми параметрами для логического ИЛИ
+        text_params = f"text={' '.join(search_phrases)}&text.logic=any&text.field=everywhere&text.period=last_year"
+        logger.debug(f"Для поиска по названиям должностей были сформированы такие параметры: {text_params}")
+        return text_params
