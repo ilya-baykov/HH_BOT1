@@ -11,7 +11,7 @@ class LiteralValidator:
         """
         self.valid_values = valid_values
 
-    def validate(self, value: str) -> None:
+    def validate(self, value: str) -> str:
         """
         Проверяет, содержится ли переданное значение в допустимых значениях.
 
@@ -22,9 +22,11 @@ class LiteralValidator:
         InvalidLiteralValueError: Если значение не содержится в допустимых значениях.
         """
         if isinstance(value, str):
-            value = value.lower()
-            if value not in self.valid_values:
-                raise InvalidLiteralValueError(value, self.valid_values)
+            value_lower = value.lower()
+            if value_lower not in self.valid_values:
+                raise InvalidLiteralValueError(value_lower, self.valid_values)
+            else:
+                return value
 
 
 binary_choice_validator = LiteralValidator(("да", "нет"))
