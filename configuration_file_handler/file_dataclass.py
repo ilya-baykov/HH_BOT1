@@ -23,7 +23,7 @@ class RecruiterDataParams:
     job_title: str  # Название должности (ключевые слова или варианты поиска)
     main_responsibilities: str  # Основные обязанности (ключевые слова)
 
-    education: Optional[EducationLevel]  # Образование (минимальный уровень)
+    education: EducationLevel  # Образование (минимальный уровень)
 
     search_status: Optional[str]  # Статус поиска
 
@@ -166,3 +166,16 @@ class RecruiterDataParams:
 
         logger.debug(f"Для поиска были сформированы такие параметры: {text_params}")
         return text_params
+
+    @property
+    def education_id(self) -> Optional[str]:
+        education_mapping = {
+            'Среднее': 'secondary',
+            'Среднее специальное': 'special_secondary',
+            'Незаконченное высшее': 'unfinished_higher',
+            'Бакалавр': 'bachelor',
+            'Магистр': 'master',
+            'Высшее': 'higher'
+        }
+        education_id = education_mapping.get(self.education)
+        return education_id
