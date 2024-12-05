@@ -2,13 +2,15 @@ import os
 
 import uvicorn
 from urllib.parse import quote
+
+from logger import logger
 from configuration_file_handler.file_dataclass import RecruiterDataParams
 from configuration_file_handler.read_file import RecruiterDataReader
 from neural_gateway.neural_gateway_client import ChatGPT, YaGPT
 from neural_gateway.prompt_generator import PromptGenerator
 from pdf_parser.pdf_reader import PDFTextExtractor
+from configuration_file_handler.enums_for_dataclass import *
 
-from logger import logger
 from requests_handler.fast_api import app
 from requests_handler.requests_manager import request_manager
 
@@ -25,8 +27,6 @@ def main() -> None:
     # # Данные из настроечного файла от рекрутера
     configuration_file_path = r"C:\Users\ilyab\PycharmProjects\HH_BOT_1\configuration_files\Клепач_Оператор call-центра_308119.xlsx"
     recruiter_params: RecruiterDataParams = RecruiterDataReader(file_path=configuration_file_path).read_data()
-
-    area = recruiter_params.search_territory
 
     # Формирование строки параметров
     params = {
@@ -48,7 +48,10 @@ def main() -> None:
         # 'skill': '3018',  # Ключевые навыки
         # 'label': 'only_with_salary'  # Дополнительный фильтр
     }
-    text_params = recruiter_params.text_params_job_titles
+    area = recruiter_params.search_territory
+    text_params = recruiter_params.generate_text_params(phrases_list=recruiter_params.job_title,
+                                                        logic=Logic.ANY, field=Field.EVERYWHERE,
+                                                        period=Period.LAST_YEAR)
 
     # Получение подходящих резюме
     resumes = request_manager.get.get_resumes(text_params=text_params, params=params)

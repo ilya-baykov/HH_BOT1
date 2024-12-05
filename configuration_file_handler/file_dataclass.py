@@ -1,9 +1,9 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 from requests import Response
 
-from configuration_file_handler.enums_for_dataclass import BinaryChoice, Gender, ExclusionCriteria
+from configuration_file_handler.enums_for_dataclass import *
 from requests_handler.requests_manager import request_manager
 from logger import logger
 
@@ -93,7 +93,9 @@ class RecruiterDataParams:
 
     @staticmethod
     def generate_text_params(phrases_list: str,
-                             logic: str = 'any', field: str = 'everywhere', period: str = 'last_year') -> str:
+                             logic: Logic = Logic.ANY,
+                             field: Field = Field.EVERYWHERE,
+                             period: Period = Period.LAST_YEAR) -> str:
         """
            Формирует текстовый параметр на основе переданного списка фраз.
 
@@ -129,7 +131,9 @@ class RecruiterDataParams:
         search_phrases = [f'"{phrases.strip()}"' for phrases in phrases_list.split(',') if phrases.strip()]
 
         # Формируем строку с текстовыми параметрами для логического ИЛИ
-        text_params = f"text={' OR '.join(search_phrases)}&text.logic={logic}&text.field={field}&text.period={period}"
+        text_params = (f"text={' OR '.join(search_phrases)}&text.logic={logic.value}&"
+                       f"text.field={field.value}&"
+                       f"text.period={period.value}")
 
         logger.debug(f"Для поиска были сформированы такие параметры: {text_params}")
         return text_params
