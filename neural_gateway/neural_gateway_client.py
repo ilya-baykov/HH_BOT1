@@ -115,3 +115,6 @@ class YaGPT(NeuralGatewayClient):
         }
         logger.debug(f'Сформированные данные для запроса к нейрошлюзу: {data}')
         return data
+
+
+model_gpt_4o_mini = ChatGPT()

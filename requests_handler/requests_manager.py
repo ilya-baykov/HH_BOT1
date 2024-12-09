@@ -78,6 +78,11 @@ class RequestsGet(RequestsBase):
                                       logger_message=f"Запрос на получение резюме")
         return response
 
+    def download_pdf(self, pdf_url):
+        response = self._get_response(method=self.METHOD, url=pdf_url,
+                                      logger_message=f"Запрос на скачивание pdf-резюме")
+        return response
+
 
 class ReferenceBookRequestsGet(RequestsBase):
     METHOD = "GET"
@@ -103,6 +108,13 @@ class ReferenceBookRequestsGet(RequestsBase):
                                       logger_message=f"Запрос на получение справочной информации о "
                                                      f"профессиональных ролях, их категориях и другую информацию о "
                                                      f"профессиональных ролях")
+        return response
+
+    def get_skill_set(self, text: str):
+        url = f"{HH_BASE_URL}/suggests/skill_set/"
+        params = {'text': text}
+        response = self._get_response(method=self.METHOD, url=url, params=params,
+                                      logger_message=f"Запрос на получение ключевых навыков")
         return response
 
 
