@@ -1,6 +1,8 @@
+import asyncio
 import os
 
 from constants.paths import RESUMES_ROOT_PATH
+from database.core import db_report_table, BaseReportTable
 from logger import logger
 
 from configuration_file_handler.file_dataclass import RecruiterDataParams
@@ -11,9 +13,11 @@ from requests_handler.requests_manager import request_manager
 from resumes_handler.applicant_info import Applicant
 from resumes_handler.contact_recipient import ContactRecipient
 from resumes_handler.resumes_handler import ResumesHandler
+from database.db_report import ReportTable
 
 
-def main() -> None:
+async def main() -> None:
+    await db_report_table.create_db(base=BaseReportTable)
     # Получение справочной информации
     # response_reference_book = request_manager.reference_book_get.get_field_reference()
 
@@ -91,4 +95,4 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
