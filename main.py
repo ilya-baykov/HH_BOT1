@@ -1,8 +1,8 @@
-import asyncio
 import os
 
 from constants.paths import RESUMES_ROOT_PATH
-from database.core import db_report_table, BaseReportTable
+from database.operations import db_operations
+
 from logger import logger
 
 from configuration_file_handler.file_dataclass import RecruiterDataParams
@@ -13,11 +13,9 @@ from requests_handler.requests_manager import request_manager
 from resumes_handler.applicant_info import Applicant
 from resumes_handler.contact_recipient import ContactRecipient
 from resumes_handler.resumes_handler import ResumesHandler
-from database.db_report import ReportTable
 
 
-async def main() -> None:
-    await db_report_table.create_db(base=BaseReportTable)
+def main() -> None:
     # Получение справочной информации
     # response_reference_book = request_manager.reference_book_get.get_field_reference()
 
@@ -39,7 +37,7 @@ async def main() -> None:
     # Формирование строки параметров
     params = {
         # 'page': 0,  # Номер страницы
-        'per_page': 5,  # Количество резюме на странице
+        'per_page': 20,  # Количество резюме на странице
         'salary_from': salary_range.salary_from,  # Минимальная зарплата
         'salary_to': salary_range.salary_to,  # Максимальная зарплата
         'age_from': age_range.age_from,  # Минимальный возраст
@@ -69,10 +67,11 @@ async def main() -> None:
 
     # Фильтрация и сортировка кандидатов
     sorted_applicants = sorted(
-        [candidate for candidate in applicants if candidate.grade_1 > 60],
+        [candidate for candidate in applicants if candidate.grade_1 > 40],
         key=lambda x: x.grade_1,
         reverse=True
     )
+
     sorted_applicants = sorted_applicants[:recruiter_params.limit]
     logger.info(f"Количество потенциальных кандидатов после первичной проверки: {len(sorted_applicants)}")
 
@@ -93,6 +92,9 @@ async def main() -> None:
     report_generator = ReportGenerator(candidates=candidates, path=base_path)
     report_generator.generate_report()
 
+    # Сохраняем данные в БД
+    # db_operations.insert_data(table_name="resume_reports", data={})
+
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

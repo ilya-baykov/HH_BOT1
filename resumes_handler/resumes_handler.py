@@ -3,6 +3,7 @@ import os
 from requests import Response
 
 from configuration_file_handler.file_dataclass import RecruiterDataParams
+from database.operations import db_operations
 from logger import logger
 from neural_gateway.neural_gateway_client import model_gpt_4o_mini
 from neural_gateway.prompt_generator import PromptGenerator
@@ -32,6 +33,10 @@ class ResumesHandler:
         applicants = []
 
         for resume in self.resumes_list:
+            # fetched_resume_id = db_operations.fetch_data(table_name="resume_reports_new", column_name='resume_id',
+            #                                              value=resume.get('id'))
+            # if fetched_resume_id:  # Это резюме уже есть в базе данных
+            #     continue
             try:
                 # Извлекаем информацию с последнего места работы
                 last_experience = resume.get('experience', [{}])[0]
