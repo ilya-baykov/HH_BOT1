@@ -14,6 +14,7 @@ from logger import logger
 
 @dataclass
 class RecruiterDataParams:
+    limit: int  # Лимит на данную вакансию
     fio_recruiter: str  # ФИО рекрутера (полностью)
     email_recruiter: str  # Почта рекрутера
     application_number: str  # Номер заявки в IQHR/ссылка на заявку
@@ -112,10 +113,10 @@ class RecruiterDataParams:
                     logger.debug(f"Для региона={region} были получены такие id:[{items_ids}]")
                     areas_ids.update(items_ids)
                 else:
-                    logger.error(f"Для региона={region} не получилось получить items]")
+                    logger.warning(f"Для региона={region} не получилось получить items]")
 
             except Exception as e:
-                logger.error(f"При попытке получить id регионов-произошла ошибка - {e}")
+                logger.warning(f"При попытке получить id регионов-произошла ошибка - {e}")
 
         unique_ids: list[str] = list(areas_ids)  # Убираем дубликаты
         return unique_ids
@@ -297,9 +298,9 @@ class RecruiterDataParams:
                     logger.debug(f"Для специализации={specialization} были получены такие id:[{items_ids}]")
                     skills_ids.update(items_ids)
                 else:
-                    logger.error(f"Для специализации={specialization} не получилось получить items]")
+                    logger.warning(f"Для специализации={specialization} не получилось получить items]")
             except Exception as e:
-                logger.error(f"При попытке получить id специализации-произошла ошибка - {e}")
+                logger.warning(f"При попытке получить id специализации-произошла ошибка - {e}")
 
         unique_ids: list[str] = list(skills_ids)  # Убираем дубликаты
         return unique_ids

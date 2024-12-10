@@ -33,7 +33,8 @@ class NeuralGatewayClient(ABC):
         try:
             response_data = response.json()
             if response_data and isinstance(response_data, list) and len(response_data) > 0:
-                return response_data[0]['message']['content']
+                message_content = response_data[0]['message']['content']
+                return message_content
         except Exception as e:
             logger.error(f"При попытке получить ответ от нейрошлюза произошла ошибка: {e}")
 

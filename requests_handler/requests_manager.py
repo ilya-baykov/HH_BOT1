@@ -48,7 +48,6 @@ class RequestsBase:
         try:
             response.raise_for_status()  # Проверяем статус ответа
             logger.info(f"{logger_message}. Статус - {response.status_code}")
-            response_url = response.url
             return response
         except requests.exceptions.RequestException as error:
             logger.error(f"{logger_message}.Произошла ошибка: {error}")
@@ -76,6 +75,12 @@ class RequestsGet(RequestsBase):
         url = f"{HH_BASE_URL}/resumes?{text_params}"
         response = self._get_response(method=self.METHOD, url=url, params=params,
                                       logger_message=f"Запрос на получение резюме")
+        return response
+
+    def get_resume(self, resume_id: str):
+        url = f"{HH_BASE_URL}/resumes/{resume_id}"
+        response = self._get_response(method=self.METHOD, url=url,
+                                      logger_message=f"Запрос на получение конкретного резюме")
         return response
 
     def download_pdf(self, pdf_url):

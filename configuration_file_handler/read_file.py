@@ -19,6 +19,7 @@ class RecruiterDataReader:
         row = dict(zip(keys, values))
 
         return RecruiterDataParams(
+            limit=20,
             fio_recruiter=row.get('ФИО рекрутера (полностью)'),
             email_recruiter=row.get('Почта рекрутера'),
             application_number=row.get('Номер заявки в IQHR/ссылка на заявку'),
