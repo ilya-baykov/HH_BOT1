@@ -24,7 +24,7 @@ pydantic==2.10.3
 pydantic_core==2.27.1
 pypdfium2==4.30.0
 python-dateutil==2.9.0.post0
-python-dotenv @ file:///C:/Users/RPA_PROD_Robot.GD/PycharmProjects/hh_bot1/LIBS/python_dotenv-1.0.1-py3-none-any.whl
+python-dotenv
 pytz==2024.2
 requests==2.32.3
 six==1.17.0
