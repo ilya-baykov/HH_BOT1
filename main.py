@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import config.env_loader  # Необходим для загрузки переменных окуржения вначале программы
+from config import logger
 from config.constants.paths import RESUMES_ROOT_PATH
 from src.configuration_file_handler.bypassing_configuration_files import ConfigurationFilesHandler
 from src.configuration_file_handler.params_creator import ParamsCollector
@@ -8,7 +9,6 @@ from src.database.database import report_database
 from src.database.operations import db_operations
 from src.report_generator.report_generator import ReportGenerator
 from src.requests_handler.requests_manager import request_manager
-from config.logger import logger
 from src.resumes_handler.applicant_info import Applicant
 from src.resumes_handler.contact_recipient import CandidateInfoRecipient
 from src.resumes_handler.resumes_handler import ResumesHandler
