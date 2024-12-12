@@ -24,7 +24,6 @@ pydantic==2.10.3
 pydantic_core==2.27.1
 pypdfium2==4.30.0
 python-dateutil==2.9.0.post0
-python-dotenv
 pytz==2024.2
 requests==2.32.3
 six==1.17.0
@@ -34,4 +33,4 @@ typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
 uvicorn==0.32.1
-win32_setctime==1.2.0
+
